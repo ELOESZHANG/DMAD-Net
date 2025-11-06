@@ -1,0 +1,39 @@
+# range
+        range1 = [0, 20]
+        range2 = [20, 40]
+        range3 = [40, 1000]
+        k = range3
+        # import pdb; pdb.set_trace()
+        dt_annos_range = [filter_det_range(dets1, k, 'frame_id') for dets1 in eval_det_annos]
+        gt_annos_range = [filter_det_range(dets2, k, 'frame_id') for dets2 in eval_gt_annos]
+        # ap_result_str, ap_dict = kitti_eval.get_official_eval_result(gt_annos_range, dt_annos_range, class_names)
+        ##########################################
+
+def filter_det_range(dets, d_range, k1):
+            dets = copy.deepcopy(dets)
+            if dets['location'].shape[0] == 0:
+                return dets
+            valid_idx = (np.abs(dets['location'][:, 2]) > d_range[0]) * \
+                        (np.abs(dets['location'][:, 2]) <= d_range[1])
+
+            # 把DontCare的位置改回True
+            for i in range(len(dets['name'])):
+                if dets['name'][i] == 'DontCare':
+                    valid_idx[i] = True
+
+            for k in dets:
+                if k == k1:
+                    continue
+                # 对gt_boxes_lidar做处理
+                if k == 'gt_boxes_lidar':
+                    temp_idx = valid_idx[:len(dets[k])]
+                    dets[k] = dets[k][temp_idx]
+                else:
+                    try:
+                        dets[k] = dets[k][valid_idx]
+                    except:
+                        import pdb
+                        pdb.set_trace()
+                        print(dets[k], k)
+                        raise
+            return dets
